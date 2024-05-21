@@ -6,6 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.metrics import accuracy_score, classification_report
 
+datasetPath = "Files/rotten_tomatoes_critic_reviews.csv"
+
 # modelo naive bayes
 class NaiveBayes:
     def fit(self, X, y):
@@ -39,7 +41,7 @@ def classify_review(review):
 
 def classify():
     #leyendo data
-    data = pd.read_csv(r'C:\Users\andre\OneDrive - Universidad Rafael Landivar\PRIMER CICLO 2024\IA\PROYECTO\archive\rotten_tomatoes_critic_reviews.csv')
+    data = pd.read_csv(datasetPath)
     print("Datos cargados correctamente")
 
     # Normalizar los datos
@@ -76,7 +78,7 @@ def runEjemplos():
     print("Classification:", classify_review(new_review))
 
 def getPublishers():
-    data = pd.read_csv(r'C:\Users\andre\OneDrive - Universidad Rafael Landivar\PRIMER CICLO 2024\IA\PROYECTO\archive\rotten_tomatoes_critic_reviews.csv')
+    data = pd.read_csv(datasetPath)
     data = data.dropna(subset=['publisher_name'])
     publisher_list = data['publisher_name'].astype(str).tolist()
     print(publisher_list)
