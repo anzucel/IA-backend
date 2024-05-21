@@ -34,6 +34,15 @@ def getPublisher():
     else :
         return jsonify({'message': 'Publishers not found'}), 400
 
+# Obtener peliculas
+@app.route('/movies', methods=['GET'])
+def getMovies():
+    movies = naiveBayes.getMovies()
+
+    if movies:
+        return jsonify({'movies': movies})
+    else :
+        return jsonify({'message': 'Publishers not found'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
