@@ -24,8 +24,8 @@ class NaiveBayes:
             self.feature_counts[c, :] = X[y == c].sum(axis=0)
 
         # Calcular probabilidades logaritmicas
-        self.class_log_prior = np.log(self.class_counts) - np.log(n_docs)
-        self.feature_log_prob = np.log(self.feature_counts + 1) - np.log(
+        self.class_log_prior = np.log(self.class_counts) - np.log(n_docs) #calcular la probabilidad logaritmica de cada clase
+        self.feature_log_prob = np.log(self.feature_counts + 1) - np.log( #se suma 1 por suavizado laplace
             self.feature_counts.sum(axis=1)[:, np.newaxis] + n_features)
 
     def predict(self, X):
@@ -34,60 +34,17 @@ class NaiveBayes:
     def predict_log(self, X):
         return X @ self.feature_log_prob.T + self.class_log_prior
 
-# clasificacion
-def classify_review(review):
-    review_transformed = vectorizer.transform([review])
-    prediction = model.predict(review_transformed)
-    return "Fresh" if prediction[0] == 1 else "Rotten"
+    @staticmethod
+    def getPublishers():
+        data = pd.read_csv(reviewDSPath)
+        data = data.dropna(subset=['publisher_name'])
+        publisher_list = data['publisher_name'].astype(str).tolist()
+        return publisher_list
 
-def classify():
-    #leyendo data
-    data = pd.read_csv(reviewDSPath)
-    print("Datos cargados correctamente")
-
-    # Normalizar los datos
-    data['review_type'] = data['review_type'].apply(lambda x: 1 if x == 'Fresh' else 0)
-    data = data.dropna(subset=['review_content'])
-
-    # Preparación de datos
-    X = data['review_content']
-    y = data['review_type']
-
-    # Convertir las reviews en una representación numérica
-    vectorizer = TfidfVectorizer(stop_words='english')
-    X = vectorizer.fit_transform(X)
-
-    # Dividir el dataset en conjuntos de entrenamiento y prueba
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-
-    # Entrenar el modelo
-    model = NaiveBayes()
-    model.fit(X_train, y_train)
-
-# Ejemplo de uso
-def runEjemplos():
-    new_review = "The movie was absolutely fantastic, I loved every moment of it!"
-    print("Review:", new_review)
-    print("Classification:", classify_review(new_review))
-
-    new_review = "The movie was terrible, I hated it and it was a waste of time."
-    print("Review:", new_review)
-    print("Classification:", classify_review(new_review))
-
-    new_review = "Too many long, very pauses. The Story was slow. Very dissapointed"
-    print("Review:", new_review)
-    print("Classification:", classify_review(new_review))
-
-def getPublishers():
-    data = pd.read_csv(reviewDSPath)
-    data = data.dropna(subset=['publisher_name'])
-    publisher_list = data['publisher_name'].astype(str).tolist()
-    return publisher_list
-
-def getMovies():
-    data = pd.read_csv(moviesDSPath)
-    data = data.dropna(subset=['rotten_tomatoes_link', 'movie_title'])
-    movies_list = data[['rotten_tomatoes_link', 'movie_title']].to_dict(orient='records')
-    return movies_list
-
+    @staticmethod
+    def getMovies():
+        data = pd.read_csv(moviesDSPath)
+        data = data.dropna(subset=['rotten_tomatoes_link', 'movie_title'])
+        movies_list = data[['rotten_tomatoes_link', 'movie_title']].to_dict(orient='records')
+        return movies_list
 
