@@ -19,7 +19,7 @@ from naiveBayes import NaiveBayes
 
 app = Flask(__name__)
 
-app.config["MONGO_URI"] = "mongodb+srv://admin:12345@atlascluster.rwws8fw.mongodb.net/db?retryWrites=true&w=majority&appName=AtlasCluster"
+app.config["MONGO_URI"] = "mongodb+srv://admin:12345@cluster0.prvnm39.mongodb.net/dbexample?retryWrites=true&w=majority&appName=Cluster0"
 mongo = PyMongo(app)
 
 model = Model()
@@ -54,10 +54,18 @@ def register():
 def login():
     data = request.get_json()
     existing_user = mongo.db.user.find_one({"username": data['username']})
+
     if not data:
         return jsonify({'message': 'Bad Request'}), 500
     else:
-        return jsonify(), 200
+        if existing_user:
+            # valida contraseña
+            if data['password'] == existing_user['password']:
+                return jsonify({"status": "success"}), 200
+            else:
+                return jsonify({"message": "incorrect password"}), 401
+        else:
+            return jsonify({"error": "User not found, try again!"}), 404
 
 
 # Obtener publisher
