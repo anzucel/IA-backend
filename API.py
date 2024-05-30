@@ -1,13 +1,14 @@
 import asyncio
 import aiohttp
-
+from flask_cors import CORS
 from flask import Flask, request, jsonify
 from flask_pymongo import PyMongo
 from pymongo.errors import ConnectionFailure
 
 app = Flask(__name__)
-app.config[
-    "MONGO_URI"] = "mongodb+srv://admin:12345@cluster0.prvnm39.mongodb.net/dbexample?retryWrites=true&w=majority&appName=Cluster0"
+
+CORS(app)
+app.config["MONGO_URI"] = "mongodb+srv://admin:12345@cluster0.prvnm39.mongodb.net/dbexample?retryWrites=true&w=majority&appName=Cluster0"
 mongo = PyMongo(app)
 
 from model import Model
@@ -187,7 +188,6 @@ def getMoviesDetail():
         return jsonify({'classification': "success"}), 200
     else:
         return jsonify({'message': 'Movies not found'}), 400
-
 
 if __name__ == '__main__':
     app.run(debug=True)
