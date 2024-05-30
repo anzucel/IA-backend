@@ -82,39 +82,52 @@ def getPublisher():
 # Obtener peliculas
 @app.route('/movies', methods=['GET'])
 def getMovies():
-    movies = NaiveBayes.getMovies()
+    movies_collection = mongo.db.movie.find({}, {"_id": 0})
+    movies = list(movies_collection)
 
     if movies:
-        return jsonify({'movies': movies})
+        return app.response_class(dumps({'movies': movies}), mimetype='application/json'), 200
     else:
         return jsonify({'message': 'Publishers not found'}), 400
 
 @app.route('/users', methods=['GET'])
 def getUsers():
-    users_collection = mongo.db.user.find({})
+    users_collection = mongo.db.user.find({}, {"_id": 0})
     users = list(users_collection)
     if users:
-        return app.response_class(dumps({'users': users}), mimetype='application/json')
+        return app.response_class(dumps({'users': users}), mimetype='application/json'), 200
     else:
         return jsonify({'message': 'Publishers not found'}), 400
 
+# realiza la clasificacion segun la review
 @app.route('/predict', methods=['POST'])
 def predict():
-    review = request.json['review']
-    prediction = model.predict(request.json['rotten_link'], request.json['publisher'], request.json['review'], request.json['user'])
-    return jsonify({"prediction": prediction})
-
-
-@app.route('/run-examples', methods=['POST'])
-def getExample():
-    examples = model.runExamples(request.json['rotten_link'], request.json['publisher'], request.json['review'],
+    res = model.runExamples(request.json['rotten_link'], request.json['publisher'], request.json['review'],
                                  request.json['user'])
-    if examples:
-        return jsonify({'classification': examples})
+    if res:
+        return jsonify({'classification': res}), 200
     else:
         return jsonify({'message': 'Publishers not found'}), 400
 
+@app.route('/movies-detail', methods=['GET'])
+def getMoviesDetail():
+    movies_collection = mongo.db.movie.find({}, {"_id": 0})
 
+    if movies_collection:
+        for movie in movies_collection:
+            url = f'http://www.omdbapi.com/?apikey=ccbef632&t={movie["movie_title"]}'
+            response = requests.get(url)
+            data = response.json()
+            movie["year"] = data.get("Year")
+            movie["plot"] = data.get("Plot")
+            movie["actors"] = data.get("Actors")
+            movie["poster"] = data.get("Poster")
+
+            mongo.db.movie.update_one({"movie_title": movie["movie_title"]},
+                                      {"$set": movie}, upsert=True)
+        return jsonify({'classification': "success"}), 200
+    else:
+        return jsonify({'message': 'Publishers not found'}), 400
 
 if __name__ == '__main__':
     app.run(debug=True)
