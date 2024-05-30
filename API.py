@@ -1,7 +1,7 @@
 import asyncio
 import aiohttp
-from flask_cors import CORS
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from flask_pymongo import PyMongo
 from pymongo.errors import ConnectionFailure
 
@@ -118,6 +118,7 @@ def predict():
         data['movie_title'] = request.json['movie_title']
         data['publisher'] = request.json['publisher']
         data['review'] = request.json['review']
+        data['user'] = request.json['user']
         data['review_type'] = res
 
         # Guardar datos de la reseña
@@ -167,6 +168,16 @@ def classifyMovie():
     else:
         return jsonify({'message': 'Movie review failed, try again'}), 400
 
+@app.route('/user-reviews', methods=['POST'])
+def getUserReviews():
+    data = request.get_json()
+
+    if data:
+        reviews_collection = mongo.db.review.find({"user": data['user']}, {"_id": 0})
+        reviews = list(reviews_collection)
+        return jsonify({'reviews': reviews}), 200
+    else:
+        return jsonify({'message': 'Movie reviews not found'}), 400
 
 @app.route('/movies-detail', methods=['GET'])
 def getMoviesDetail():
