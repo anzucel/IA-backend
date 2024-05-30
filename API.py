@@ -6,7 +6,8 @@ from flask_pymongo import PyMongo
 from pymongo.errors import ConnectionFailure
 
 app = Flask(__name__)
-app.config["MONGO_URI"] = "mongodb+srv://admin:12345@cluster0.prvnm39.mongodb.net/dbexample?retryWrites=true&w=majority&appName=Cluster0"
+app.config[
+    "MONGO_URI"] = "mongodb+srv://admin:12345@cluster0.prvnm39.mongodb.net/dbexample?retryWrites=true&w=majority&appName=Cluster0"
 mongo = PyMongo(app)
 
 from model import Model
@@ -14,15 +15,18 @@ from naiveBayes import NaiveBayes
 
 model = Model()
 
+
 async def fetch_movie_details(session, movie_title):
     url = f'http://www.omdbapi.com/?apikey=ccbef632&t={movie_title}'
     async with session.get(url) as response:
         return await response.json()
 
+
 async def fetch_all_movie_details(movie_titles):
     async with aiohttp.ClientSession() as session:
         tasks = [fetch_movie_details(session, title) for title in movie_titles]
         return await asyncio.gather(*tasks)
+
 
 @app.route('/check_mongo')
 def check_mongo():
@@ -32,6 +36,7 @@ def check_mongo():
         return jsonify({"message": "MongoDB connection successful"}), 200
     except ConnectionFailure:
         return jsonify({"message": "MongoDB connection failed"}), 500
+
 
 # Crear usuario
 @app.route('/register', methods=['POST'])
@@ -48,6 +53,7 @@ def register():
 
     mongo.db.user.insert_one(data)
     return jsonify({'status': 'success'}), 200
+
 
 # Iniciar sesión
 @app.route('/login', methods=['POST'])
@@ -67,6 +73,7 @@ def login():
         else:
             return jsonify({"error": "User not found, try again!"}), 404
 
+
 # Obtener publisher
 @app.route('/publishers', methods=['GET'])
 def getPublisher():
@@ -76,6 +83,7 @@ def getPublisher():
         return jsonify({'publishers': publishers})
     else:
         return jsonify({'message': 'Publishers not found'}), 400
+
 
 # Obtener películas
 @app.route('/movies', methods=['GET'])
@@ -88,6 +96,7 @@ def getMovies():
     else:
         return jsonify({'message': 'Movies not found'}), 400
 
+
 @app.route('/users', methods=['GET'])
 def getUsers():
     users_collection = mongo.db.user.find({}, {"_id": 0})
@@ -97,11 +106,12 @@ def getUsers():
     else:
         return jsonify({'message': 'Users not found'}), 400
 
+
 # Realizar la clasificación según la reseña
 @app.route('/predict', methods=['POST'])
 def predict():
     res = model.runExamples(request.json['rotten_link'], request.json['publisher'], request.json['review'],
-                             request.json['user'])
+                            request.json['user'])
     if res:
         data = {}
         data['movie_title'] = request.json['movie_title']
@@ -116,6 +126,7 @@ def predict():
     else:
         return jsonify({'message': 'Prediction failed'}), 400
 
+
 # Consultar reseñas por película
 @app.route('/get-reviews', methods=['POST'])
 def getReviews():
@@ -127,6 +138,34 @@ def getReviews():
         return jsonify({'reviews': reviews}), 200
     else:
         return jsonify({'message': 'Reviews not found'}), 400
+
+
+# Obtener clasificación película
+@app.route('/movie-review', methods=['POST'])
+def classifyMovie():
+    data = request.get_json()
+
+    if data:
+        # buscar reviews por película
+        reviews_collection = mongo.db.review.find({"movie_title": data['movie_title']}, {"_id": 0})
+        reviews = list(reviews_collection)
+        total_reviews = len(reviews)
+        total_fresh = 0
+        total_rotten = 0
+        for review in reviews:
+            if review['review_type'] == 'Fresh':
+                total_fresh += 1
+            else:
+                total_rotten += 1
+
+        av_fresh = total_fresh / total_reviews
+        av_rotten = total_rotten / total_reviews
+        res = {"fresh": av_fresh, "rotten": av_rotten}
+
+        return jsonify({'result': res}), 200
+    else:
+        return jsonify({'message': 'Movie review failed, try again'}), 400
+
 
 @app.route('/movies-detail', methods=['GET'])
 def getMoviesDetail():
@@ -148,6 +187,7 @@ def getMoviesDetail():
         return jsonify({'classification': "success"}), 200
     else:
         return jsonify({'message': 'Movies not found'}), 400
+
 
 if __name__ == '__main__':
     app.run(debug=True)
