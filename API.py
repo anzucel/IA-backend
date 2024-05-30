@@ -105,7 +105,28 @@ def predict():
     res = model.runExamples(request.json['rotten_link'], request.json['publisher'], request.json['review'],
                                  request.json['user'])
     if res:
+        data = {}
+        data['movie_title'] = request.json['movie_title']
+        data['publisher'] = request.json['publisher']
+        data['review'] = request.json['review']
+        data['review_type'] = res
+
+        # Guardar datos review
+        mongo.db.review.insert_one(data)
+
         return jsonify({'classification': res}), 200
+    else:
+        return jsonify({'message': 'Publishers not found'}), 400
+
+# consultar reviews por pelicula
+@app.route('/get-reviews', methods=['POST'])
+def getReviews():
+    data = request.get_json()
+    reviews_collection = mongo.db.review.find({"movie_title": data['movie_title']}, {"_id": 0})
+    reviews = list(reviews_collection)
+
+    if reviews_collection:
+        return jsonify({'reviews': reviews}), 200
     else:
         return jsonify({'message': 'Publishers not found'}), 400
 
