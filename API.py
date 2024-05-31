@@ -154,14 +154,18 @@ def classifyMovie():
         total_reviews = len(reviews)
         total_fresh = 0
         total_rotten = 0
-        for review in reviews:
-            if review['review_type'] == 'Fresh':
-                total_fresh += 1
-            else:
-                total_rotten += 1
+        av_fresh = 0
+        av_rotten = 0
+        if total_reviews > 0:
+            for review in reviews:
+                if review['review_type'] == 'Fresh':
+                    total_fresh += 1
+                else:
+                    total_rotten += 1
 
-        av_fresh = total_fresh / total_reviews
-        av_rotten = total_rotten / total_reviews
+            av_fresh = total_fresh / total_reviews
+            av_rotten = total_rotten / total_reviews
+
         res = {"fresh": av_fresh, "rotten": av_rotten}
 
         return jsonify({'result': res}), 200
